@@ -9,10 +9,14 @@ class SwiftDependencyGraph < Formula
   depends_on arch: :arm64
 
   def install
-    bin.install "DependencyGraph"
+    # Canonical command name.
+    bin.install "DependencyGraph" => "dependency-graph"
+
+    # Compatibility alias.
+    bin.install_symlink "dependency-graph" => "DependencyGraph"
   end
 
   test do
-    system "#{bin}/DependencyGraph", "--help"
+    system "#{bin}/dependency-graph", "--help"
   end
 end
