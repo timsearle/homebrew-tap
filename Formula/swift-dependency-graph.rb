@@ -9,11 +9,9 @@ class SwiftDependencyGraph < Formula
   depends_on arch: :arm64
 
   def install
-    # Canonical command name.
-    bin.install "DependencyGraph" => "dependency-graph"
-
-    # Compatibility alias.
-    bin.install_symlink "dependency-graph" => "DependencyGraph"
+    # Transition-friendly: older archives contained `DependencyGraph`, newer contain `dependency-graph`.
+    bin_name = File.exist?("dependency-graph") ? "dependency-graph" : "DependencyGraph"
+    bin.install bin_name => "dependency-graph"
   end
 
   test do
