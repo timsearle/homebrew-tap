@@ -1,0 +1,102 @@
+name: Update formula
+
+on:
+  workflow_dispatch:
+    inputs:
+      formula:
+        description: "Formula name (e.g. swift-dependency-graph)"
+        required: true
+        type: string
+      formula_path:
+        description: "Optional override path (e.g. Formula/foo.rb)"
+        required: false
+        type: string
+      url:
+        description: "New URL"
+        required: true
+        type: string
+      sha256:
+        description: "New sha256"
+        required: true
+        type: string
+      version:
+        description: "New version (e.g. 0.14.0)"
+        required: true
+        type: string
+      branch:
+        description: "Branch to commit to"
+        required: false
+        default: "main"
+        type: string
+      commit_message:
+        description: "Optional commit message"
+        required: false
+        type: string
+
+permissions:
+  contents: write
+
+concurrency:
+  group: update-formula-${{ inputs.formula }}-${{ inputs.branch }}
+  cancel-in-progress: false
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.branch }}
+
+      - name: Update formula file
+        env:
+          FORMULA: ${{ inputs.formula }}
+          FORMULA_PATH_INPUT: ${{ inputs.formula_path }}
+          URL: ${{ inputs.url }}
+          SHA256: ${{ inputs.sha256 }}
+          VERSION: ${{ inputs.version }}
+        run: |
+          set -euo pipefail
+
+          if [ -n "${FORMULA_PATH_INPUT}" ]; then
+            FORMULA_PATH="${FORMULA_PATH_INPUT}"
+          else
+            FORMULA_PATH="Formula/${FORMULA}.rb"
+          fi
+
+          if [ ! -f "${FORMULA_PATH}" ]; then
+            echo "Formula file not found: ${FORMULA_PATH}"
+            exit 1
+          fi
+
+          sed -i -E "s|^[[:space:]]*url \".*\"|  url \"${URL}\"|" "${FORMULA_PATH}"
+          sed -i -E "s|^[[:space:]]*sha256 \".*\"|  sha256 \"${SHA256}\"|" "${FORMULA_PATH}"
+          sed -i -E "s|^[[:space:]]*version \".*\"|  version \"${VERSION}\"|" "${FORMULA_PATH}"
+
+          git diff -- "${FORMULA_PATH}" || true
+
+      - name: Commit and push
+        env:
+          BRANCH: ${{ inputs.branch }}
+          FORMULA: ${{ inputs.formula }}
+          VERSION: ${{ inputs.version }}
+          COMMIT_MESSAGE: ${{ inputs.commit_message }}
+        run: |
+          set -euo pipefail
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          if git diff --quiet; then
+            echo "No changes to commit"
+            exit 0
+          fi
+
+          MSG="${COMMIT_MESSAGE:-}"
+          if [ -z "${MSG}" ]; then
+            MSG="${FORMULA} ${VERSION}"
+          fi
+
+          git add -A
+          git commit -m "${MSG}"
+          git push origin "HEAD:${BRANCH}"
