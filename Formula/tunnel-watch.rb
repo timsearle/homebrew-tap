@@ -2,7 +2,7 @@ class TunnelWatch < Formula
   desc "Report whether the Rotherhithe Tunnel is open or closed (TfL)"
   homepage "https://github.com/timsearle/tunnel-watch"
   url "https://github.com/timsearle/tunnel-watch/releases/download/v0.5.0/tunnel-watch-macos-arm64.zip"
-  sha256 "bff66a72baaa78fc3b9bf52fb4eb34177023c278bc2b709183ee125a702b1105"
+  sha256 "03e629f4828acf680895207a94fa601db09334f7e0729e8d13e2f3fdf79a890e"
   version "0.5.0"
   license "MIT"
 
